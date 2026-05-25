@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '4.0.6' // 현재 표준 릴리스 유지
+    id 'org.springframework.boot' version '4.0.6'
     id 'io.spring.dependency-management' version '1.1.7'
 }
 
@@ -10,7 +10,7 @@ description = 'backend'
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(21) // Java 21 스펙 지정
+        languageVersion = JavaLanguageVersion.of(21)
     }
 }
 
