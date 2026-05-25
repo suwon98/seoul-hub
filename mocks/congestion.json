@@ -1,0 +1,8 @@
+{
+  "areaName": "강남역",
+  "congestionLevel": "RED",
+  "congestionMessage": "사람이 매우 많아 이동 시 주변을 잘 살펴야 합니다.",
+  "populationMin": 82000,
+  "populationMax": 84000,
+  "updateTime": "2026-05-25T20:00:00Z"
+}
