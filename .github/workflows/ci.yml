@@ -7,12 +7,9 @@ on:
     branches: [ main ]
 
 jobs:
-  # 1. 백엔드(Spring Boot) 변경 시 검증 작업
   backend-ci:
-    name: Backend CI
+    name: Backend CI & API Spec Extract
     runs-on: ubuntu-latest
-    outputs:
-      backend_changed: ${{ steps.filter.outputs.backend }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -33,14 +30,21 @@ jobs:
           distribution: 'temurin'
           cache: 'gradle'
 
-      - name: Build with Gradle
+      - name: Build and Generate OpenAPI
         if: steps.filter.outputs.backend == 'true'
         run: |
           cd apps/backend
           chmod +x ./gradlew
-          ./gradlew build -x test
+          ./gradlew build
 
-  # 2. 프론트엔드(Next.js) 변경 시 검증 작업
+      - name: Sync API Docs to Notion
+        if: steps.filter.outputs.backend == 'true'
+        run: |
+          node scripts/sync-to-notion.js
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
+
   frontend-ci:
     name: Frontend CI
     runs-on: ubuntu-latest
@@ -60,7 +64,7 @@ jobs:
         if: steps.filter.outputs.frontend == 'true'
         uses: pnpm/action-setup@v4
         with:
-          version: 11.3.0
+          version: '11.3.0'
 
       - name: Set up Node.js
         if: steps.filter.outputs.frontend == 'true'

@@ -21,3 +21,6 @@ spring:
       host: ${SPRING_DATA_REDIS_HOST:localhost}
       port: ${SPRING_DATA_REDIS_PORT:6379}
       password: ${SPRING_DATA_REDIS_PASSWORD:}
+
+      # application.yaml 맨 아랫줄에 테스트 주석 추가
+      # test: pipeline triggerg
