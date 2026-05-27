@@ -10,6 +10,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 @SpringBootTest(properties = "springdoc.api-docs.enabled=true")
@@ -27,6 +28,19 @@ class OpenApiSpecExtractTest {
                 .getResponse()
                 .getContentAsString(StandardCharsets.UTF_8);
 
-        Files.writeString(Paths.get("../../openapi.json"), openApiJson);
+
+        Path[] targetPaths = {
+                Paths.get("../../openapi.json"),
+                Paths.get("./openapi.json"),
+                Paths.get("openapi.json")
+        };
+
+        for (Path path : targetPaths) {
+            try {
+                Files.writeString(path, openApiJson);
+                System.out.println("=== [ENGINE SUCCESS] OpenAPI Spec Saved To -> " + path.toAbsolutePath() + " ===");
+            } catch (Exception e) {
+            }
+        }
     }
 }
