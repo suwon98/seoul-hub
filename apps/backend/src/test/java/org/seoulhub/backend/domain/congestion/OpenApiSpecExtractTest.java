@@ -1,4 +1,5 @@
 package org.seoulhub.backend.domain.congestion;
+//Test용 주석입니다.
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
