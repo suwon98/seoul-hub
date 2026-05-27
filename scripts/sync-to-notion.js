@@ -1,12 +1,16 @@
 const fs = require('fs');
 const path = require('path');
 
-const NOTION_TOKEN = process.env.NOTION_TOKEN;
-const DATABASE_ID = process.env.NOTION_DATABASE_ID;
+const NOTION_TOKEN = process.env.NOTION_TOKEN ? process.env.NOTION_TOKEN.trim() : "";
+let DATABASE_ID = process.env.NOTION_DATABASE_ID ? process.env.NOTION_DATABASE_ID.trim() : "";
 
 if (!NOTION_TOKEN || !DATABASE_ID) {
     console.error("Error: NOTION_TOKEN or NOTION_DATABASE_ID environment variable is missing.");
     process.exit(1);
+}
+
+if (DATABASE_ID.length === 32) {
+    DATABASE_ID = `${DATABASE_ID.substring(0, 8)}-${DATABASE_ID.substring(8, 12)}-${DATABASE_ID.substring(12, 16)}-${DATABASE_ID.substring(16, 20)}-${DATABASE_ID.substring(20)}`;
 }
 
 const jsonPath = path.join(__dirname, '../apps/backend/build/openapi.json');
@@ -20,20 +24,18 @@ const openapi = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
 
 async function syncToNotion() {
     const paths = openapi.paths || {};
-    console.log("Starting Notion API specification sync based on 5 standard columns...");
+    console.log(`Starting Notion API specification sync to Database [${DATABASE_ID}]...`);
 
     for (const [pathKey, pathObj] of Object.entries(paths)) {
         for (const [method, operation] of Object.entries(pathObj)) {
             const summary = operation.summary || operation.description || "No description";
 
-            // 엔드포인트 경로 규칙 및 자산 권한 검증을 통한 Auth 값 분기
             const isAdmin = pathKey.includes('admin') ||
                 summary.includes('관리자') ||
                 (operation.operationId || '').toLowerCase().includes('admin');
             const authValue = isAdmin ? "관리자" : "사용자";
 
             try {
-                // 지정된 5개 컬럼 스펙에 맞추어 노션 데이터베이스 속성 매핑
                 const response = await fetch('https://api.notion.com/v1/pages', {
                     method: 'POST',
                     headers: {
