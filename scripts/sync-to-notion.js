@@ -2,16 +2,22 @@ const fs = require('fs');
 const path = require('path');
 
 const NOTION_TOKEN = process.env.NOTION_TOKEN ? process.env.NOTION_TOKEN.trim() : "";
-let DATABASE_ID = process.env.NOTION_DATABASE_ID ? process.env.NOTION_DATABASE_ID.trim() : "";
+const RAW_DATABASE_ID = process.env.NOTION_DATABASE_ID ? process.env.NOTION_DATABASE_ID.trim() : "";
 
-if (!NOTION_TOKEN || !DATABASE_ID) {
+if (!NOTION_TOKEN || !RAW_DATABASE_ID) {
     console.error("Error: NOTION_TOKEN or NOTION_DATABASE_ID environment variable is missing.");
     process.exit(1);
 }
 
-if (DATABASE_ID.length === 32) {
-    DATABASE_ID = `${DATABASE_ID.substring(0, 8)}-${DATABASE_ID.substring(8, 12)}-${DATABASE_ID.substring(12, 16)}-${DATABASE_ID.substring(16, 20)}-${DATABASE_ID.substring(20)}`;
+const cleanId = RAW_DATABASE_ID.replace(/[^a-zA-Z0-9]/g, '');
+
+if (cleanId.length !== 32) {
+    console.error(`Error: 정제된 DATABASE_ID의 길이가 32자가 아닙니다. (현재 추출된 길이: ${cleanId.length}자)`);
+    console.error(`GitHub Secrets에 저장된 값에 오타나 누락이 없는지 꼭 확인해 주세요. 추출된 값: ${cleanId}`);
+    process.exit(1);
 }
+
+const DATABASE_ID = `${cleanId.substring(0, 8)}-${cleanId.substring(8, 12)}-${cleanId.substring(12, 16)}-${cleanId.substring(16, 20)}-${cleanId.substring(20)}`;
 
 const jsonPath = path.join(__dirname, '../apps/backend/build/openapi.json');
 
