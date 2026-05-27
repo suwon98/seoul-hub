@@ -1,5 +1,5 @@
 package org.seoulhub.backend.domain.congestion;
-
+// 파이프라인 강제 트리거를 위한 무결성 검증 주석 라인
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
