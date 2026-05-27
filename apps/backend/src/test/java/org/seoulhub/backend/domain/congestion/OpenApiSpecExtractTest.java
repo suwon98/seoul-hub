@@ -28,19 +28,22 @@ class OpenApiSpecExtractTest {
                 .getResponse()
                 .getContentAsString(StandardCharsets.UTF_8);
 
+        Path current = Paths.get(".").toAbsolutePath();
+        boolean saved = false;
 
-        Path[] targetPaths = {
-                Paths.get("../../openapi.json"),
-                Paths.get("./openapi.json"),
-                Paths.get("openapi.json")
-        };
-
-        for (Path path : targetPaths) {
-            try {
-                Files.writeString(path, openApiJson);
-                System.out.println("=== [ENGINE SUCCESS] OpenAPI Spec Saved To -> " + path.toAbsolutePath() + " ===");
-            } catch (Exception e) {
+        while (current != null) {
+            if (Files.exists(current.resolve(".git")) || Files.exists(current.resolve("scripts"))) {
+                Path targetPath = current.resolve("openapi.json");
+                Files.writeString(targetPath, openApiJson);
+                System.out.println("=== [ROBUST SUCCESS] openapi.json saved to root: " + targetPath.toAbsolutePath() + " ===");
+                saved = true;
+                break;
             }
+            current = current.getParent();
+        }
+
+        if (!saved) {
+            Files.writeString(Paths.get("openapi.json"), openApiJson);
         }
     }
 }
