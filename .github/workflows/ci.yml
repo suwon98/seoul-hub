@@ -70,11 +70,11 @@ jobs:
         if: steps.filter.outputs.frontend == 'true'
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'pnpm'
 
       - name: Install Dependencies & Build
         if: steps.filter.outputs.frontend == 'true'
         run: |
-          pnpm install
+          pnpm install --frozen-lockfile
           pnpm --filter frontend build
