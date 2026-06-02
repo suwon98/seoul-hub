@@ -1,6 +1,7 @@
 package org.seoulhub.backend.domain.user;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,15 +18,25 @@ public class UserController {
 
     @Operation(summary = "일반 이메일 회원가입", description = "새로운 회원을 등록합니다. 비밀번호는 대소문자, 숫자, 특수문자가 강제됩니다.")
     @PostMapping("/signup")
-    public ResponseEntity<Long> signUp(@RequestBody @Valid UserSignUpRequestDto requestDto) {
+    public ResponseEntity<SignUpResponse> signUp(@RequestBody @Valid UserSignUpRequestDto requestDto) {
         Long userId = userService.signUp(requestDto);
-        return ResponseEntity.ok(userId);
+        return ResponseEntity.ok(new SignUpResponse(true, userId));
     }
 
     @Operation(summary = "이메일 중복 확인", description = "입력한 이메일이 이미 가입되어 있는지 실시간 검증합니다.")
     @GetMapping("/check-email")
-    public ResponseEntity<Boolean> checkEmail(@RequestParam String email) {
+    public ResponseEntity<EmailCheckResponse> checkEmail(@RequestParam String email) {
         boolean isDuplicated = userService.isEmailDuplicated(email);
-        return ResponseEntity.ok(isDuplicated);
+
+        return ResponseEntity.ok(new EmailCheckResponse(isDuplicated));
     }
+
+    @Schema(description = "회원가입 최종 응답 객체")
+    public record SignUpResponse(boolean success, Long id) {}
+
+    @Schema(description = "이메일 중복 체크 응답 객체")
+    public record EmailCheckResponse(
+            @Schema(description = "중복 여부", example = "false")
+            boolean isDuplicated
+    ) {}
 }
