@@ -16,6 +16,17 @@ export interface CongestionResponse {
   observedAt?: string;
 }
 
+// 💡 1. 로그인 요청/응답 규격 인터페이스 정식 추가
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface LoginResponse {
+  success: boolean;
+  accessToken: string;
+}
+
 export const apiClient = {
   /**
    * 1. 이메일 중복 체크 API
@@ -42,6 +53,23 @@ export const apiClient = {
     });
     if (!res.ok) throw new Error('회원가입 요청에 실패했습니다.');
     return res.json();
+  },
+
+  async login(data: LoginRequest): Promise<LoginResponse> {
+    const response = await fetch("http://localhost:8080/api/v1/users/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(errorText || "로그인 요청 처리 중 에러가 발생했습니다.");
+    }
+
+    return response.json();
   },
 
   /**

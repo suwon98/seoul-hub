@@ -39,4 +39,19 @@ public class UserController {
             @Schema(description = "중복 여부", example = "false")
             boolean isDuplicated
     ) {}
+
+    @Operation(summary = "정규 회원 로그인", description = "이메일과 비밀번호를 검증하여 1시간 수명의 정식 JWT 인증 토큰을 발급합니다.")
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> login(@RequestBody @jakarta.validation.Valid UserLoginRequestDto requestDto) {
+        String token = userService.login(requestDto);
+        return ResponseEntity.ok(new LoginResponse(true, token));
+    }
+
+    @Schema(description = "로그인 최종 인증 응답 객체")
+    public record LoginResponse(
+            @Schema(description = "성공 여부")
+            boolean success,
+            @Schema(description = "Bearer Access Token 문자열")
+            String accessToken
+    ) {}
 }
