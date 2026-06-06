@@ -28,11 +28,24 @@ export interface CongestionResponse {
   updateTime: string;
 }
 
+// Q&A 게시판 데이터 요청/응답 인터페이스
+export interface QuestionRequest {
+  title: string;
+  content: string;
+}
+
+export interface QuestionBoardResponse {
+  id: number;
+  title: string;
+  content: string;
+  writerEmail: string;
+  writerName: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export const apiClient = {
-  /**
-   * 이메일 중복 체크 API
-   * GET /api/v1/users/check-email?email=...
-   */
+  /** 이메일 중복 체크 API */
   async checkEmail(email: string): Promise<{ isDuplicated: boolean }> {
     const res = await fetch(`${NEXT_PUBLIC_API_URL}/api/v1/users/check-email?email=${encodeURIComponent(email)}`, {
       method: 'GET',
@@ -42,10 +55,7 @@ export const apiClient = {
     return res.json();
   },
 
-  /**
-   * 회원가입 API
-   * POST /api/v1/users/signup
-   */
+  /** 회원가입 API */
   async signUp(data: SignUpRequest): Promise<{ id: number; success: boolean }> {
     const res = await fetch(`${NEXT_PUBLIC_API_URL}/api/v1/users/signup`, {
       method: 'POST',
@@ -56,31 +66,21 @@ export const apiClient = {
     return res.json();
   },
 
-  /**
-   * 로그인 API
-   * POST /api/v1/users/login
-   */
+  /** 로그인 API */
   async login(data: LoginRequest): Promise<LoginResponse> {
     const response = await fetch(`${NEXT_PUBLIC_API_URL}/api/v1/users/login`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
-
     if (!response.ok) {
       const errorText = await response.text();
       throw new Error(errorText || "로그인 요청 처리 중 에러가 발생했습니다.");
     }
-
     return response.json();
   },
 
-  /**
-   * 인증 토큰을 헤더에 실어서 혼잡도를 조회
-   * GET /api/v1/congestion?areaName=...
-   */
+  /** 실시간 혼잡도 조회 API */
   async getCongestion(areaName: string, token: string): Promise<CongestionResponse> {
     const response = await fetch(`${NEXT_PUBLIC_API_URL}/api/v1/congestion?areaName=${encodeURIComponent(areaName)}`, {
       method: "GET",
@@ -89,14 +89,37 @@ export const apiClient = {
         "Content-Type": "application/json",
       },
     });
-
     if (!response.ok) {
-      if (response.status === 403) {
-        throw new Error("인증 토큰이 만료되었거나 접근 권한이 없습니다. 다시 로그인해 주세요.");
-      }
+      if (response.status === 403) throw new Error("인증 토큰이 만료되었거나 접근 권한이 없습니다.");
       throw new Error("혼잡도 데이터를 가져오는 중 에러가 발생했습니다.");
     }
+    return response.json();
+  },
 
+  /** Q&A 질문글 등록 API */
+  async createQuestion(data: QuestionRequest, token: string): Promise<{ success: boolean; questionId: number }> {
+    const response = await fetch(`${NEXT_PUBLIC_API_URL}/api/v1/questions`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error("질문 등록에 실패했습니다.");
+    return response.json();
+  },
+
+  /**  Q&A 질문 목록 최신순 전수 조회 API */
+  async getAllQuestions(token: string): Promise<QuestionBoardResponse[]> {
+    const response = await fetch(`${NEXT_PUBLIC_API_URL}/api/v1/questions`, {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+    if (!response.ok) throw new Error("질문 목록을 불러오지 못했습니다.");
     return response.json();
   },
 };
