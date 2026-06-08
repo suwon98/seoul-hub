@@ -16,42 +16,40 @@ public class CongestionScheduler {
 
     private final CongestionRepository congestionRepository;
     private final Random random = new Random();
-
-    // 결정 로그 5, 6번에 수립된 서울 핵심 거점 포인트 매핑
-    private final List<String> targetAreas = List.of("홍대입구역", "강남역", "강남대로", "테헤란로", "신림역");
+    private final List<String> areas = List.of("강남역", "홍대입구역", "강남대로", "테헤란로", "신림역");
 
     @Scheduled(fixedDelay = 10000)
-    public void collectRealTimeCongestionData() {
-        log.info("[파이프라인] 정식 Congestion 도메인 기반 실시간 수집 배치 가동...");
+    public void generateSubwayCongestionData() {
+        for (String area : areas) {
+            int popMin = 15000 + random.nextInt(10000);
+            int popMax = popMin + random.nextInt(15000);
 
-        String areaName = targetAreas.get(random.nextInt(targetAreas.size()));
-        CongestionLevel level = getRandomLevel();
+            CongestionLevel level = CongestionLevel.values()[random.nextInt(CongestionLevel.values().length)];
+            String message = String.format("현재 %s 인근은 유동인구 약 %d명 수준으로 %s 상태입니다.",
+                    area, (popMin + popMax) / 2, level.name());
 
-        String message = switch (level) {
-            case GREEN -> "해당 지역은 보행 유동 인구 및 흐름이 아주 여유롭고 원활합니다.";
-            case YELLOW -> "일반적인 유입량 수준을 보이고 있으며, 보통의 흐름을 유지 중입니다.";
-            case ORANGE -> "인파가 대거 밀집하여 다소 다소 무겁고 혼잡하오니 안전에 유의바랍니다.";
-            case RED -> "극심한 인구 병목 및 정체가 발생 중입니다. 해당 거점 진입 우회를 강력 권장합니다.";
-        };
+            Congestion congestion = Congestion.builder()
+                    .areaName(area)
+                    .congestionLevel(level)
+                    .congestionMessage(message)
+                    .populationMin(popMin)
+                    .populationMax(popMax)
+                    .updateTime(LocalDateTime.now())
+                    .build();
 
-        int minPop = random.nextInt(30000) + 10000;
-        int maxPop = random.nextInt(15000);
-
-        Congestion congestion = Congestion.builder()
-                .areaName(areaName)
-                .congestionLevel(level)
-                .congestionMessage(message)
-                .populationMin(minPop)
-                .populationMax(maxPop)
-                .updateTime(LocalDateTime.now())
-                .build();
-
-        congestionRepository.save(congestion);
-        log.info("[파이프라인] 적재 완료: 장소={}, 단계={}", areaName, level);
+            congestionRepository.save(congestion);
+        }
+        log.info("[스케줄러] 서울 주요 거점 {}개소 실시간 혼잡도 적재 완료", areas.size());
     }
 
-    private CongestionLevel getRandomLevel() {
-        CongestionLevel[] levels = CongestionLevel.values();
-        return levels[random.nextInt(levels.length)];
+    @Scheduled(fixedDelay = 60000)
+    public void cleanUpOldCongestionData() {
+        LocalDateTime threshold = LocalDateTime.now().minusMinutes(5);
+        try {
+            congestionRepository.deleteOlderThan(threshold);
+            log.info("[데이터 청소 배치] {} 시점 이전의 만료된 과거 혼잡도 데이터 벌크 삭제 완료", threshold);
+        } catch (Exception e) {
+            log.error("[데이터 청소 배치] 가동 중 에러 발생: {}", e.getMessage());
+        }
     }
 }
