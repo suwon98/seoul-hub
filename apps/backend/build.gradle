@@ -29,7 +29,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
 
     // 3. Documentation (Notion 자동화를 위한 Swagger 엔진)
-    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.9'
 
     // 4. Code Automation (Lombok)
     compileOnly 'org.projectlombok:lombok'
