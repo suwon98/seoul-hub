@@ -31,11 +31,11 @@ export default function QuestionsPage() {
     }
   }, []);
 
-  // 인가 가드 락 레이어
+  // 인가 가드 레이어
   useEffect(() => {
     const storedToken = localStorage.getItem("accessToken");
     if (!storedToken) {
-      alert("🔒 회원 전용 공간입니다. 로그인을 먼저 진행해 주세요.");
+      alert("회원 전용 공간입니다. 로그인을 먼저 진행해 주세요.");
       router.push("/login");
       return;
     }
@@ -56,7 +56,7 @@ export default function QuestionsPage() {
       setSubmitting(true);
       const res = await apiClient.createQuestion({ title, content }, token);
       if (res.success) {
-        alert("질문이 커뮤니티에 무사히 등록되었습니다!");
+        alert("질문이 커뮤니티에 무사히 등록되었습니다.");
         setTitle("");
         setContent("");
         await loadQuestions(token);
@@ -133,7 +133,7 @@ export default function QuestionsPage() {
 
           {loading ? (
             <div className="text-center py-10 text-slate-400 font-medium text-sm">
-              백엔드에서 질문 데이터 구조 피딩 중...🔄
+              백엔드에서 질문 데이터 구조 피딩 중...
             </div>
           ) : questions.length === 0 ? (
             <div className="p-12 text-center bg-white border border-dashed border-slate-200 rounded-2xl text-slate-400 text-sm font-medium">
@@ -142,7 +142,11 @@ export default function QuestionsPage() {
           ) : (
             <div className="space-y-4">
               {questions.map((q) => (
-                <article key={q.id} className="p-6 bg-white border border-slate-100 rounded-2xl shadow-xs hover:shadow-md transition-all space-y-3">
+                <article 
+                  key={q.id} 
+                  onClick={() => router.push(`/questions/${q.id}`)}
+                  className="p-6 bg-white border border-slate-100 rounded-2xl shadow-xs hover:shadow-md hover:border-slate-300 transition-all space-y-3 cursor-pointer"
+                >
                   <div className="flex justify-between items-start gap-4">
                     <h3 className="text-base font-extrabold text-slate-900 leading-snug">{q.title}</h3>
                     <span className="text-[10px] bg-slate-100 text-slate-600 font-bold px-2 py-1 rounded-sm shrink-0">

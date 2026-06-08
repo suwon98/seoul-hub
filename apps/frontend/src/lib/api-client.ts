@@ -1,13 +1,11 @@
 const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
-// 회원가입 요청 DTO 타입 정의
 export interface SignUpRequest {
   email: string;
   name: string;
   password: string;
 }
 
-// 로그인 요청/응답 규격 인터페이스
 export interface LoginRequest {
   email: string;
   password: string;
@@ -18,7 +16,6 @@ export interface LoginResponse {
   accessToken: string;
 }
 
-// 혼잡도 API 데이터
 export interface CongestionResponse {
   areaName: string;
   congestionLevel: "GREEN" | "YELLOW" | "ORANGE" | "RED";
@@ -28,7 +25,6 @@ export interface CongestionResponse {
   updateTime: string;
 }
 
-// Q&A 게시판 데이터 요청/응답 인터페이스
 export interface QuestionRequest {
   title: string;
   content: string;
@@ -37,6 +33,16 @@ export interface QuestionRequest {
 export interface QuestionBoardResponse {
   id: number;
   title: string;
+  content: string;
+  writerEmail: string;
+  writerName: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// 답변(댓글) 데이터 응답 인터페이스 명세
+export interface AnswerResponse {
+  id: number;
   content: string;
   writerEmail: string;
   writerName: string;
@@ -110,7 +116,7 @@ export const apiClient = {
     return response.json();
   },
 
-  /**  Q&A 질문 목록 최신순 전수 조회 API */
+  /** Q&A 질문 목록 최신순 조회 API */
   async getAllQuestions(token: string): Promise<QuestionBoardResponse[]> {
     const response = await fetch(`${NEXT_PUBLIC_API_URL}/api/v1/questions`, {
       method: "GET",
@@ -120,6 +126,46 @@ export const apiClient = {
       },
     });
     if (!response.ok) throw new Error("질문 목록을 불러오지 못했습니다.");
+    return response.json();
+  },
+
+  /** 질문글 단건 상세 조회 API */
+  async getQuestion(id: number, token: string): Promise<QuestionBoardResponse> {
+    const response = await fetch(`${NEXT_PUBLIC_API_URL}/api/v1/questions/${id}`, {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+    if (!response.ok) throw new Error("질문 상세 내용을 불러오지 못했습니다.");
+    return response.json();
+  },
+
+  /** 특정 질문글의 답변 목록 조회 API */
+  async getAnswers(questionId: number, token: string): Promise<AnswerResponse[]> {
+    const response = await fetch(`${NEXT_PUBLIC_API_URL}/api/v1/questions/${questionId}/answers`, {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+    if (!response.ok) throw new Error("답변 목록을 불러오지 못했습니다.");
+    return response.json();
+  },
+
+  /** 신규 답변(댓글) 등록 API */
+  async createAnswer(questionId: number, data: { content: string }, token: string): Promise<{ success: boolean; answerId: number }> {
+    const response = await fetch(`${NEXT_PUBLIC_API_URL}/api/v1/questions/${questionId}/answers`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error("답변 등록에 실패했습니다.");
     return response.json();
   },
 };
