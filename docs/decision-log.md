@@ -104,3 +104,11 @@
 ## 26. 데이터 보존 정책(Data Retention Policy) 기반 오토 클리닝 스케줄러 배치 도입
 - **결정:** 혼잡도 데이터 레코드가 무한히 인서트되는 인프라 과부하 리스크를 제어하기 위해, `@Scheduled(fixedDelay = 60000)` 규격의 1분 주기 백그라운드 배치를 개설하고 현재 시점 기준 5분이 경과한 과거 만료 데이터를 `@Modifying` 벌크 쿼리로 일괄 자동 삭제하도록 구조화함.
 - **이유:** 지속적인 데이터 유입 환경 속에서 MariaDB 스토리지 디스크 용량 고갈 및 인덱스 비대화로 인한 데이터베이스 성능 저하를 예방하고, 실시간성 트래픽 모니터링에 필요한 유효 데이터 최신 스냅샷 수량(약 150건 내외)만을 효율적으로 유지관리하기 위함임.
+
+## 27. @RestControllerAdvice 기반 전역 예외 처리(Global Exception Handling) 메커니즘 수립
+- **결정:** 애플리케이션 전역에서 발생하는 비즈니스 예외(`IllegalArgumentException`), 유효성 검증 실패 예외(`MethodArgumentNotValidException`), 일반 시스템 예외(`Exception`)를 일괄 인터셉트하는 `GlobalExceptionHandler`를 바인딩하고, 규격화된 표준 JSON 에러 포맷(`ErrorResponse`)으로 응답하도록 구조화함.
+- **이유:** 내부 서버의 세부 에러 Stack Trace가 날것 그대로 클라이언트에 유출되는 보안 취약점을 원천 차단하고, 프론트엔드 아키텍처가 에러 상황을 일관된 규격으로 파싱하여 사용자에게 안정적인 피드백 UI를 제공할 수 있도록 예외 수송 회선을 표준화하기 위함임.
+
+## 28. Spring 7.x 사양에 따른 Spring doc OpenAPI 종속성 버전 상위 동기화
+- **결정:** 전역 예외 처리기 도입 후 Swagger UI 명세 추출 과정에서 프레임워크 간 생성자 불일치(`NoSuchMethodError`)로 인해 발생하는 `/v3/api-docs` 500 내부 에러 결함을 해결하기 위해, `build.gradle`에 선언된 `springdoc-openapi-starter-webmvc-ui` 라이브러리의 버전을 `2.6.0`에서 `2.8.9`로 업그레이드함.
+- **이유:** 최신 스프링 프레임워크 7.x 및 스프링 부트 4.x 스택 내부의 변경된 클래스 구조와 API 문서화 자동화 라이브러리 간의 바이너리 호환성 무결성을 확보하기 위함임.

@@ -47,8 +47,11 @@ dependencies {
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
 
-    // 💡 유효성 검증(비밀번호 정규식, 필수값 체크 등)을 활성화하는 라이브러리 추가
+    // 유효성 검증(비밀번호 정규식, 필수값 체크 등)을 활성화하는 라이브러리 추가
     implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    // 공공 API 통신을 위한 WebClient 웹플럭스 모듈 장착
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
 
     testRuntimeOnly 'com.h2database:h2'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
