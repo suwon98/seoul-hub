@@ -4,5 +4,6 @@ public enum CongestionLevel {
     GREEN,
     YELLOW,
     ORANGE,
-    RED
+    RED,
+    UNKNOWN
 }
