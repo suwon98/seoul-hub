@@ -1,4 +1,4 @@
-FROM eclipse-temurin:21-jdk-jammy AS build
+FROM eclipse-temurin:22-jdk-jammy AS build
 WORKDIR /workspace
 COPY gradlew build.gradle settings.gradle ./
 COPY gradle ./gradle
@@ -6,7 +6,7 @@ RUN chmod +x gradlew
 COPY src ./src
 RUN ./gradlew --no-daemon bootJar -x test
 
-FROM eclipse-temurin:21-jre-jammy
+FROM eclipse-temurin:22-jre-jammy
 RUN groupadd --system app && useradd --system --gid app --home-dir /app app
 WORKDIR /app
 COPY --from=build --chown=app:app /workspace/build/libs/*SNAPSHOT.jar /app/app.jar
