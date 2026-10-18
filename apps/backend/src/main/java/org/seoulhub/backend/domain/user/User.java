@@ -30,6 +30,12 @@ public class User {
     @Column(nullable = false)
     private Role role;
 
+    @Column(nullable = false, columnDefinition="boolean default false")
+    private boolean emailVerified = false;
+
+    public void activate(String name, String encodedPassword) { this.name=name; this.password=encodedPassword; this.emailVerified=true; }
+    public void changePassword(String encodedPassword) { this.password=encodedPassword; }
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

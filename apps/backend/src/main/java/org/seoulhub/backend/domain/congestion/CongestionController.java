@@ -12,10 +12,20 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/congestion")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:3000")
 public class CongestionController {
 
     private final CongestionService congestionService;
+    private final SeoulCollectionPolicy collectionPolicy;
+
+    private final ViewportRefreshQueue refreshQueue;
+    @PostMapping("/refresh")
+    public java.util.Map<String,Boolean> refresh(@jakarta.validation.Valid @RequestBody ViewportRefreshQueue.Request request) {
+        refreshQueue.update(request);
+        return java.util.Map.of("accepted",true);
+    }
+
+    @GetMapping("/status")
+    public SeoulCollectionPolicy.Status status() { return collectionPolicy.status(); }
 
     @Operation(summary = "전체 거점 실시간 인구 혼잡도 목록 조회", description = "수집된 모든 거점의 최신 실시간 인구 혼잡도 목록을 조회합니다.")
     @GetMapping("/all")

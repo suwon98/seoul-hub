@@ -1,0 +1,40 @@
+# Proposal: creates only a free Java web service; database is provisioned separately on Aiven Free.
+services:
+  - type: web
+    name: seoul-hub-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./apps/backend/Dockerfile
+    dockerContext: ./apps/backend
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: HIBERNATE_DIALECT
+        value: org.seoulhub.backend.global.config.MySqlMariaDbDriverDialect
+      - key: SPRING_DATASOURCE_URL
+        sync: false
+      - key: SPRING_DATASOURCE_USERNAME
+        sync: false
+      - key: SPRING_DATASOURCE_PASSWORD
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: API_PROXY_SECRET
+        generateValue: true
+      - key: SEOUL_API_KEY
+        sync: false
+      - key: SEOUL_COLLECTION_REQUEST_DELAY_MS
+        value: 1000
+      - key: SEOUL_COLLECTION_DAILY_BUDGET
+        value: 900
+      - key: APP_PUBLIC_ORIGIN
+        sync: false
+      - key: MAIL_MODE
+        value: brevo
+      - key: BREVO_API_KEY
+        sync: false
+      - key: MAIL_SENDER_EMAIL
+        sync: false
+      - key: MAIL_SENDER_NAME
+        value: Seoul Hub

@@ -1,4 +1,6 @@
 spring:
+  flyway:
+    enabled: false
   datasource:
     url: jdbc:h2:mem:seoul_hub_test;DB_CLOSE_DELAY=-1;MODE=MySQL
     driver-class-name: org.h2.Driver
@@ -12,3 +14,11 @@ spring:
       hibernate:
         show_sql: true
         format_sql: true
+seoul:
+  api:
+    key: ""
+  collection:
+    enabled: false
+security:
+  jwt:
+    secret: test-only-signing-secret-for-seoul-hub-integration-tests

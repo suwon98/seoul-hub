@@ -1,57 +1,53 @@
 package org.seoulhub.backend.domain.user;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.seoulhub.backend.global.config.JwtTokenProvider;
+import java.security.Principal;
+import java.util.Map;
 
-@Tag(name = "user", description = "회원 인증 및 계정 관리 API")
-@RestController
-@RequestMapping("/api/v1/users")
-@RequiredArgsConstructor
+@RestController @RequestMapping("/api/v1/users") @RequiredArgsConstructor
 public class UserController {
+    private final UserService users;
+    private final AccountLifecycleService accounts;
+    private final JwtTokenProvider tokens;
+    private static final String RECEIPT="요청을 접수했습니다. 계정 상태와 발송 제한에 따라 안내 메일이 발송됩니다. 메일이 오지 않으면 스팸함을 확인하거나 잠시 후 다시 요청해 주세요.";
 
-    private final UserService userService;
-
-    @Operation(summary = "일반 이메일 회원가입", description = "새로운 회원을 등록합니다. 비밀번호는 대소문자, 숫자, 특수문자가 강제됩니다.")
     @PostMapping("/signup")
-    public ResponseEntity<SignUpResponse> signUp(@RequestBody @Valid UserSignUpRequestDto requestDto) {
-        Long userId = userService.signUp(requestDto);
-        return ResponseEntity.ok(new SignUpResponse(true, userId));
+    public ResponseEntity<Map<String,Object>> signUp(@RequestBody @Valid UserSignUpRequestDto request) {
+        users.signUp(request);
+        return receipt();
     }
-
-    @Operation(summary = "이메일 중복 확인", description = "입력한 이메일이 이미 가입되어 있는지 실시간 검증합니다.")
-    @GetMapping("/check-email")
-    public ResponseEntity<EmailCheckResponse> checkEmail(@RequestParam String email) {
-        boolean isDuplicated = userService.isEmailDuplicated(email);
-
-        return ResponseEntity.ok(new EmailCheckResponse(isDuplicated));
+    @PostMapping("/request-verification")
+    public ResponseEntity<Map<String,Object>> requestVerification(@RequestBody @Valid AccountRequests.EmailRequest request) {
+        accounts.requestVerification(request.email()); return receipt();
     }
-
-    @Schema(description = "회원가입 최종 응답 객체")
-    public record SignUpResponse(boolean success, Long id) {}
-
-    @Schema(description = "이메일 중복 체크 응답 객체")
-    public record EmailCheckResponse(
-            @Schema(description = "중복 여부", example = "false")
-            boolean isDuplicated
-    ) {}
-
-    @Operation(summary = "정규 회원 로그인", description = "이메일과 비밀번호를 검증하여 1시간 수명의 정식 JWT 인증 토큰을 발급합니다.")
+    @PostMapping("/verify-email")
+    public Map<String,Boolean> verify(@RequestBody @Valid AccountRequests.VerifyRequest request) {
+        accounts.verify(request); return Map.of("success",true);
+    }
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Map<String,Object>> forgot(@RequestBody @Valid AccountRequests.EmailRequest request) {
+        accounts.requestReset(request.email()); return receipt();
+    }
+    @PostMapping("/reset-password")
+    public Map<String,Boolean> reset(@RequestBody @Valid AccountRequests.ResetRequest request) {
+        accounts.reset(request); return Map.of("success",true);
+    }
+    @PostMapping("/delete-account")
+    public Map<String,Boolean> delete(Principal principal,@RequestBody @Valid AccountRequests.DeleteRequest request) {
+        accounts.deleteAccount(principal.getName(),request); return Map.of("success",true);
+    }
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@RequestBody @jakarta.validation.Valid UserLoginRequestDto requestDto) {
-        String token = userService.login(requestDto);
-        return ResponseEntity.ok(new LoginResponse(true, token));
+    public LoginResponse login(@RequestBody @Valid UserLoginRequestDto request) { return new LoginResponse(true,users.login(request)); }
+    @GetMapping("/me")
+    public Map<String,String> me(Principal principal) { return Map.of("email",principal.getName()); }
+    @PostMapping("/logout")
+    public Map<String,Boolean> logout(@RequestHeader("Authorization") String auth) {
+        tokens.revoke(auth.substring(7)); return Map.of("success",true);
     }
-
-    @Schema(description = "로그인 최종 인증 응답 객체")
-    public record LoginResponse(
-            @Schema(description = "성공 여부")
-            boolean success,
-            @Schema(description = "Bearer Access Token 문자열")
-            String accessToken
-    ) {}
+    private ResponseEntity<Map<String,Object>> receipt() { return ResponseEntity.accepted().body(Map.of("success",true,"message",RECEIPT)); }
+    public record LoginResponse(boolean success,String accessToken) {}
 }

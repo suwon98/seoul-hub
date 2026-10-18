@@ -34,6 +34,12 @@ public class CongestionHourlyStat {
     @Column(nullable = false)
     private LocalDateTime statHour;
 
+    public void updateObservation(CongestionLevel level, int min, int max) {
+        this.congestionLevel = level;
+        this.avgPopulationMin = min;
+        this.avgPopulationMax = max;
+    }
+
     @Builder
     public CongestionHourlyStat(String areaName, CongestionLevel congestionLevel, Integer avgPopulationMin, Integer avgPopulationMax, LocalDateTime statHour) {
         this.areaName = areaName;

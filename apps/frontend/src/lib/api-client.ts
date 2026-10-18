@@ -1,9 +1,22 @@
-const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-
+export class ApiError extends Error { constructor(message: string, public status: number) { super(message); } }
+export function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : "요청 처리 중 문제가 발생했습니다.";
+}
+async function request<T>(path: string, body?: unknown, signal?: AbortSignal): Promise<T> {
+  const response = await fetch(`/api/v1${path}`, {
+    method: body === undefined ? "GET" : "POST", credentials: "same-origin", cache: "no-store",
+    headers: body === undefined ? {} : { "Content-Type": "application/json", "X-SeoulHub-Request": "1" },
+    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+    signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(55000)]) : AbortSignal.timeout(55000),
+  });
+  if (!response.ok) {
+    const error = await response.json().catch(() => null);
+    throw new ApiError(error?.message || `요청에 실패했습니다 (${response.status}).`, response.status);
+  }
+  return response.json();
+}
 export interface SignUpRequest {
   email: string;
-  name: string;
-  password: string;
 }
 
 export interface LoginRequest {
@@ -13,16 +26,27 @@ export interface LoginRequest {
 
 export interface LoginResponse {
   success: boolean;
-  accessToken: string;
 }
 
+export interface CollectionStatus { dailyBudget: number; usedToday: number; requestDelayMs: number; cacheTtlSeconds: number; }
+
 export interface CongestionResponse {
+  freshness: "RECENT" | "DELAYED" | "EXPIRED" | "UNAVAILABLE" | "HISTORICAL";
+  observationAgeMinutes: number | null;
+  lastCheckedAt: string | null;
+  collectedAt: string | null;
+  areaCode: string;
+  category: string;
+  latitude: number;
+  longitude: number;
   areaName: string;
-  congestionLevel: "GREEN" | "YELLOW" | "ORANGE" | "RED";
+  congestionLevel: "GREEN" | "YELLOW" | "ORANGE" | "RED" | "UNKNOWN";
   congestionMessage: string;
   populationMin: number;
   populationMax: number;
-  updateTime: string;
+  updateTime: string | null;
+  stale: boolean;
+  sourceCongestionLevel: "GREEN" | "YELLOW" | "ORANGE" | "RED" | "UNKNOWN";
 }
 
 export interface QuestionRequest {
@@ -34,7 +58,6 @@ export interface QuestionBoardResponse {
   id: number;
   title: string;
   content: string;
-  writerEmail: string;
   writerName: string;
   createdAt: string;
   updatedAt: string;
@@ -44,128 +67,29 @@ export interface QuestionBoardResponse {
 export interface AnswerResponse {
   id: number;
   content: string;
-  writerEmail: string;
   writerName: string;
   createdAt: string;
   updatedAt: string;
 }
 
 export const apiClient = {
-  /** 이메일 중복 체크 API */
-  async checkEmail(email: string): Promise<{ isDuplicated: boolean }> {
-    const res = await fetch(`${NEXT_PUBLIC_API_URL}/api/v1/users/check-email?email=${encodeURIComponent(email)}`, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
-    });
-    if (!res.ok) throw new Error('이메일 중복 체크에 실패했습니다.');
-    return res.json();
-  },
-
-  /** 회원가입 API */
-  async signUp(data: SignUpRequest): Promise<{ id: number; success: boolean }> {
-    const res = await fetch(`${NEXT_PUBLIC_API_URL}/api/v1/users/signup`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    if (!res.ok) throw new Error('회원가입 요청에 실패했습니다.');
-    return res.json();
-  },
-
-  /** 로그인 API */
-  async login(data: LoginRequest): Promise<LoginResponse> {
-    const response = await fetch(`${NEXT_PUBLIC_API_URL}/api/v1/users/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(errorText || "로그인 요청 처리 중 에러가 발생했습니다.");
-    }
-    return response.json();
-  },
-
-  /** 실시간 혼잡도 조회 API */
-  async getCongestion(areaName: string, token: string): Promise<CongestionResponse> {
-    const response = await fetch(`${NEXT_PUBLIC_API_URL}/api/v1/congestion?areaName=${encodeURIComponent(areaName)}`, {
-      method: "GET",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    });
-    if (!response.ok) {
-      if (response.status === 403) throw new Error("인증 토큰이 만료되었거나 접근 권한이 없습니다.");
-      throw new Error("혼잡도 데이터를 가져오는 중 에러가 발생했습니다.");
-    }
-    return response.json();
-  },
-
-  /** Q&A 질문글 등록 API */
-  async createQuestion(data: QuestionRequest, token: string): Promise<{ success: boolean; questionId: number }> {
-    const response = await fetch(`${NEXT_PUBLIC_API_URL}/api/v1/questions`, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    });
-    if (!response.ok) throw new Error("질문 등록에 실패했습니다.");
-    return response.json();
-  },
-
-  /** Q&A 질문 목록 최신순 조회 API */
-  async getAllQuestions(token: string): Promise<QuestionBoardResponse[]> {
-    const response = await fetch(`${NEXT_PUBLIC_API_URL}/api/v1/questions`, {
-      method: "GET",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    });
-    if (!response.ok) throw new Error("질문 목록을 불러오지 못했습니다.");
-    return response.json();
-  },
-
-  /** 질문글 단건 상세 조회 API */
-  async getQuestion(id: number, token: string): Promise<QuestionBoardResponse> {
-    const response = await fetch(`${NEXT_PUBLIC_API_URL}/api/v1/questions/${id}`, {
-      method: "GET",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    });
-    if (!response.ok) throw new Error("질문 상세 내용을 불러오지 못했습니다.");
-    return response.json();
-  },
-
-  /** 특정 질문글의 답변 목록 조회 API */
-  async getAnswers(questionId: number, token: string): Promise<AnswerResponse[]> {
-    const response = await fetch(`${NEXT_PUBLIC_API_URL}/api/v1/questions/${questionId}/answers`, {
-      method: "GET",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    });
-    if (!response.ok) throw new Error("답변 목록을 불러오지 못했습니다.");
-    return response.json();
-  },
-
-  /** 신규 답변(댓글) 등록 API */
-  async createAnswer(questionId: number, data: { content: string }, token: string): Promise<{ success: boolean; answerId: number }> {
-    const response = await fetch(`${NEXT_PUBLIC_API_URL}/api/v1/questions/${questionId}/answers`, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    });
-    if (!response.ok) throw new Error("답변 등록에 실패했습니다.");
-    return response.json();
-  },
+  refreshVisible: (body: {clientId: string; sequence: number; visible: string[]; selected: string | null}, signal?: AbortSignal) => request<{accepted: boolean}>("/congestion/refresh", body, signal),
+  getCollectionStatus: (signal?: AbortSignal) => request<CollectionStatus>("/congestion/status", undefined, signal),
+  signUp: (data: SignUpRequest) => request<{ success: boolean; message: string }>("/users/signup", data),
+  requestVerification: (email: string) => request<{ message: string }>("/users/request-verification", { email }),
+  verifyEmail: (token: string, name: string, password: string) => request<{ success: boolean }>("/users/verify-email", { token, name, password }),
+  forgotPassword: (email: string) => request<{ message: string }>("/users/forgot-password", { email }),
+  resetPassword: (token: string, password: string) => request<{ success: boolean }>("/users/reset-password", { token, password }),
+  deleteAccount: (password: string, confirmation: string) => request<{ success: boolean }>("/users/delete-account", { password, confirmation }),
+  login: (data: LoginRequest) => request<LoginResponse>("/users/login", data),
+  me: () => request<{ email: string }>("/users/me"),
+  logout: () => request<{ success: boolean }>("/users/logout", {}),
+  getCongestion: (areaName: string) => request<CongestionResponse>(`/congestion/${encodeURIComponent(areaName)}`),
+  getAllCongestion: (signal?: AbortSignal) => request<CongestionResponse[]>("/congestion/all", undefined, signal),
+  getHistory: (area: string, signal?: AbortSignal) => request<CongestionResponse[]>(`/congestion/${encodeURIComponent(area)}/history`, undefined, signal),
+  createQuestion: (data: QuestionRequest) => request<{ success: boolean; questionId: number }>("/questions", data),
+  getAllQuestions: () => request<QuestionBoardResponse[]>("/questions"),
+  getQuestion: (id: number) => request<QuestionBoardResponse>(`/questions/${id}`),
+  getAnswers: (id: number) => request<AnswerResponse[]>(`/questions/${id}/answers`),
+  createAnswer: (id: number, data: { content: string }) => request<{ success: boolean; answerId: number }>(`/questions/${id}/answers`, data),
 };

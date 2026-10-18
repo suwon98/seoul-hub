@@ -1,28 +1,57 @@
 spring:
   application:
     name: seoul-hub-backend
-
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:mariadb://localhost:3306/seoul_hub?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul}
-    username: ${SPRING_DATASOURCE_USERNAME:root}
-    password: ${SPRING_DATASOURCE_PASSWORD:1234}
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.mariadb.jdbc.Driver
-
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 1
   jpa:
-    database-platform: org.hibernate.dialect.MariaDBDialect
+    open-in-view: false
+    database-platform: ${HIBERNATE_DIALECT:org.hibernate.dialect.MariaDBDialect}
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     properties:
       hibernate:
-        show_sql: true
-        format_sql: true
-
-  data:
-    redis:
-      host: ${SPRING_DATA_REDIS_HOST:localhost}
-      port: ${SPRING_DATA_REDIS_PORT:6379}
-      password: ${SPRING_DATA_REDIS_PASSWORD:}
-
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: false
+server:
+  port: ${PORT:8080}
+  error:
+    include-message: never
+    include-stacktrace: never
+    include-binding-errors: never
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
 seoul:
   api:
-    key: REMOVED_REVOKED_SEOUL_API_KEY
+    key: ${SEOUL_API_KEY:}
+  collection:
+    enabled: ${SEOUL_COLLECTION_ENABLED:true}
+    request-delay-ms: ${SEOUL_COLLECTION_REQUEST_DELAY_MS:0}
+    daily-budget: ${SEOUL_COLLECTION_DAILY_BUDGET:900}
+security:
+  jwt:
+    secret: ${JWT_SECRET}
+  proxy-secret: ${API_PROXY_SECRET:}
+app:
+  cors-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
+
+account:
+  public-origin: ${APP_PUBLIC_ORIGIN:http://localhost:3000}
+  mail:
+    mode: ${MAIL_MODE:disabled}
+    api-key: ${BREVO_API_KEY:}
+    sender-email: ${MAIL_SENDER_EMAIL:}
+    sender-name: ${MAIL_SENDER_NAME:Seoul Hub}

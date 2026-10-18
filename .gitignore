@@ -36,3 +36,15 @@ out/
 # OS files
 .DS_Store
 Thumbs.db
+.next-*/
+apps/backend/data/
+.pnpm-store/
+
+.env.properties
+
+.audit-results.json
+
+repomix-output.*
+
+# Private recovery snapshots and history cleanup workspace
+.local-recovery/

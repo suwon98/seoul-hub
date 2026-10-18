@@ -14,35 +14,30 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
+    private final org.seoulhub.backend.global.config.RequestRateLimiter rateLimiter;
+    private static final String DUMMY_HASH = new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder().encode("unused-dummy-password");
+
+    private final AccountLifecycleService accounts;
+
+    public void signUp(UserSignUpRequestDto requestDto) {
+        if (!rateLimiter.allow("signup-global", 40, 900000)) return;
+        String email=requestDto.getEmail();
+        if (!userRepository.existsByEmail(email)) {
+            // No usable password until the mailbox owner completes verification.
+            String unusable=passwordEncoder.encode(java.util.UUID.randomUUID().toString()+java.util.UUID.randomUUID());
+            userRepository.saveAndFlush(User.builder().email(email).name("인증 대기").password(unusable).role(Role.USER).build());
+        }
+        accounts.requestVerification(email);
+    }
 
     @Transactional
-    public Long signUp(UserSignUpRequestDto requestDto) {
-        if (userRepository.existsByEmail(requestDto.getEmail())) {
-            throw new IllegalArgumentException("이미 존재하는 이메일입니다.");
-        }
-
-        String encodedPassword = passwordEncoder.encode(requestDto.getPassword());
-
-        User user = requestDto.toEntity(encodedPassword);
-
-        User savedUser = userRepository.save(user);
-        return savedUser.getId();
-    }
-
-    @Transactional(readOnly = true)
-    public boolean isEmailDuplicated(String email) {
-        return userRepository.existsByEmail(email);
-    }
-
-    @Transactional(readOnly = true)
     public String login(UserLoginRequestDto requestDto) {
-        User user = userRepository.findByEmail(requestDto.getEmail())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않거나 유실된 계정 이메일입니다."));
-
-        if (!passwordEncoder.matches(requestDto.getPassword(), user.getPassword())) {
-            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
-        }
-
+        String email = requestDto.getEmail();
+        if (!rateLimiter.allow("login:"+email, 10, 900000)) throw new org.seoulhub.backend.global.error.TooManyRequestsException();
+        User user = userRepository.findLockedByEmail(email).orElse(null);
+        boolean valid = passwordEncoder.matches(requestDto.getPassword(), user == null ? DUMMY_HASH : user.getPassword());
+        if (user == null || !valid) throw new org.springframework.security.authentication.BadCredentialsException("이메일 또는 비밀번호가 올바르지 않습니다.");
+        if (!user.isEmailVerified()) throw new org.springframework.security.authentication.DisabledException("이메일 인증을 먼저 완료해 주세요.");
         return jwtTokenProvider.createToken(user.getEmail(), user.getRole().name());
     }
 }

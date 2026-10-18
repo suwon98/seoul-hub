@@ -8,7 +8,6 @@ import java.time.LocalDateTime;
 public class AnswerResponseDto {
     private final Long id;
     private final String content;
-    private final String writerEmail;
     private final String writerName;
     private final LocalDateTime createdAt;
     private final LocalDateTime updatedAt;
@@ -16,7 +15,6 @@ public class AnswerResponseDto {
     public AnswerResponseDto(Answer answer) {
         this.id = answer.getId();
         this.content = answer.getContent();
-        this.writerEmail = answer.getUser().getEmail();
         this.writerName = answer.getUser().getName();
         this.createdAt = answer.getCreatedAt();
         this.updatedAt = answer.getUpdatedAt();

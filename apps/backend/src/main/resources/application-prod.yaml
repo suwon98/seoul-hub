@@ -1,0 +1,14 @@
+spring:
+  flyway:
+    enabled: true
+    baseline-on-migrate: false
+  jpa:
+    hibernate:
+      ddl-auto: validate
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+security:
+  proxy-secret: ${API_PROXY_SECRET}

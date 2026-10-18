@@ -1,12 +1,13 @@
 {
   "name": "seoul-hub",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "private": true,
+  "description": "서울 실시간 인구 혼잡도와 Q&A 커뮤니티",
+  "packageManager": "pnpm@11.28.5",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC"
+    "dev": "pnpm --filter frontend dev",
+    "build": "pnpm --filter frontend build",
+    "lint": "pnpm --filter frontend lint",
+    "test": "node scripts/test-backend.mjs"
+  }
 }

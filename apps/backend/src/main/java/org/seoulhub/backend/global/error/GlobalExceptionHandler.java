@@ -43,6 +43,39 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> handleConflict(org.springframework.dao.DataIntegrityViolationException e) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ErrorResponse.builder()
+                .status(409).error("CONFLICT").message("이미 등록된 정보와 충돌합니다. 입력 내용을 확인해 주세요.").build());
+    }
+
+    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleMalformedBody(org.springframework.http.converter.HttpMessageNotReadableException e) {
+        return ResponseEntity.badRequest().body(ErrorResponse.builder()
+                .status(400).error("BAD_REQUEST").message("요청 본문의 형식이 올바르지 않습니다.").build());
+    }
+
+    @ExceptionHandler(org.springframework.security.authentication.BadCredentialsException.class)
+    public ResponseEntity<ErrorResponse> handleCredentials(Exception e) {
+        return ResponseEntity.status(401).body(ErrorResponse.builder().status(401).error("UNAUTHORIZED").message("이메일 또는 비밀번호가 올바르지 않습니다.").build());
+    }
+    @ExceptionHandler(org.springframework.security.authentication.DisabledException.class)
+    public ResponseEntity<ErrorResponse> handleUnverified(Exception e) {
+        return ResponseEntity.status(403).body(ErrorResponse.builder().status(403).error("EMAIL_UNVERIFIED").message("이메일 인증을 먼저 완료해 주세요. 인증 메일을 다시 요청할 수 있습니다.").build());
+    }
+    @ExceptionHandler(TooManyRequestsException.class)
+    public ResponseEntity<ErrorResponse> handleRateLimit(Exception e) {
+        return ResponseEntity.status(429).header("Retry-After","900").body(ErrorResponse.builder().status(429).error("TOO_MANY_REQUESTS").message("요청이 너무 많습니다. 15분 후 다시 시도해 주세요.").build());
+    }
+    @ExceptionHandler(org.springframework.web.method.annotation.HandlerMethodValidationException.class)
+    public ResponseEntity<ErrorResponse> handleParameters(Exception e) {
+        return ResponseEntity.badRequest().body(ErrorResponse.builder().status(400).error("BAD_REQUEST").message("요청 항목의 형식을 확인해 주세요.").build());
+    }
+
+    @ExceptionHandler(org.springframework.web.HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ErrorResponse> handleMethod(org.springframework.web.HttpRequestMethodNotSupportedException e) {
+        return ResponseEntity.status(405).body(ErrorResponse.builder().status(405).error("METHOD_NOT_ALLOWED").message("지원하지 않는 요청 방식입니다.").build());
+    }
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneralException(Exception e) {
         log.error("Unhandled Internal Server Error", e);

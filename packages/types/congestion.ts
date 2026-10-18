@@ -1,4 +1,4 @@
-export type CongestionLevel = 'GREEN' | 'YELLOW' | 'ORANGE' | 'RED';
+export type CongestionLevel = 'GREEN' | 'YELLOW' | 'ORANGE' | 'RED' | 'UNKNOWN';
 
 export interface CongestionData {
     areaName: string;

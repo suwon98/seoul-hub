@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "congestion_records")
+@Table(name = "congestion_records", uniqueConstraints=@UniqueConstraint(name="uk_observation",columnNames={"areaName","updateTime"}), indexes=@Index(name="idx_observation_time",columnList="updateTime"))
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Congestion {
@@ -37,14 +37,20 @@ public class Congestion {
     @Column(nullable = false)
     private LocalDateTime updateTime;
 
+    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.TIMESTAMP)
+    private java.time.Instant collectedAt;
+
+    @PrePersist void received() { collectedAt=java.time.Instant.now(); }
+
     @Builder
     public Congestion(String areaName, CongestionLevel congestionLevel, String congestionMessage,
-                      Integer populationMin, Integer populationMax, LocalDateTime updateTime) {
+                      Integer populationMin, Integer populationMax, LocalDateTime updateTime, java.time.Instant collectedAt) {
         this.areaName = areaName;
         this.congestionLevel = congestionLevel;
         this.congestionMessage = congestionMessage;
         this.populationMin = populationMin;
         this.populationMax = populationMax;
         this.updateTime = updateTime;
+        this.collectedAt = collectedAt;
     }
 }

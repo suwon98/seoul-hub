@@ -2,73 +2,52 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { apiClient, QuestionBoardResponse, AnswerResponse } from "@/lib/api-client";
+import { ApiError, errorMessage, apiClient, QuestionBoardResponse, AnswerResponse } from "@/lib/api-client";
 
 export default function QuestionDetailPage() {
   const router = useRouter();
   const params = useParams();
   const id = Number(params.id); // URL 경로변수에서 질문글 ID 추출
 
-  const [token, setToken] = useState<string | null>(null);
+
   const [question, setQuestion] = useState<QuestionBoardResponse | null>(null);
   const [answers, setAnswers] = useState<AnswerResponse[]>([]);
-  
+
   // 답변 작성 폼 상태
   const [content, setContent] = useState("");
-  
+
   // UI 상태 지시어
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // 데이터 통합 로드 파이프라인
-  const loadPageData = useCallback(async (authToken: string) => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      // 두 요청을 병렬 처리하여 네트워킹 레이턴시 최적화
-      const [questionData, answersData] = await Promise.all([
-        apiClient.getQuestion(id, authToken),
-        apiClient.getAnswers(id, authToken)
-      ]);
-      
-      setQuestion(questionData);
-      setAnswers(answersData);
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }, [id]);
+  const loadPageData = useCallback(() => {
+    return Promise.all([apiClient.getQuestion(id), apiClient.getAnswers(id)]).then(data => {
+      setError(null); setQuestion(data[0]); setAnswers(data[1]); setLoading(false);
+    }).catch((err: unknown) => { if (err instanceof ApiError && err.status === 401) router.replace("/login"); setError(errorMessage(err)); setLoading(false); });
+  }, [id, router]);
 
   // 인가 가드 실행
   useEffect(() => {
-    const storedToken = localStorage.getItem("accessToken");
-    if (!storedToken) {
-      alert("🔒 회원 전용 상세 페이지입니다. 로그인을 진행해 주세요.");
-      router.push("/login");
-      return;
-    }
-    setToken(storedToken);
-    loadPageData(storedToken);
+    void loadPageData();
   }, [router, loadPageData]);
 
   // 답변(댓글) 등록 핸들러
   const handleAnswerSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!token || !content.trim()) return;
+    if (submitting || !content.trim()) return;
 
     try {
       setSubmitting(true);
-      const res = await apiClient.createAnswer(id, { content }, token);
+      const res = await apiClient.createAnswer(id, { content });
       if (res.success) {
         setContent("");
         // 댓글 컴포넌트 실시간 동기화 리로드
-        await loadPageData(token);
+        await loadPageData();
       }
-    } catch (err: any) {
-      alert(err.message);
+    } catch (err: unknown) {
+      alert(errorMessage(err));
     } finally {
       setSubmitting(false);
     }
@@ -77,7 +56,7 @@ export default function QuestionDetailPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center text-slate-400 font-medium text-sm">
-        백엔드로부터 Q&A 통합 자산 수송 중...
+        질문을 불러오는 중...
       </div>
     );
   }
@@ -95,13 +74,13 @@ export default function QuestionDetailPage() {
   return (
     <main className="min-h-screen bg-slate-50 p-6 sm:p-10 text-slate-900">
       <div className="max-w-3xl mx-auto space-y-8">
-        
+
         {/* 뒤로가기 제어 바 */}
         <button
           onClick={() => router.push("/questions")}
           className="text-xs font-bold text-slate-600 hover:text-slate-900 flex items-center gap-2 transition-all cursor-pointer"
         >
-          ⬅️ 질문 목록으로 탈출
+          ⬅️ 질문 목록으로 돌아가기
         </button>
 
         {/* 질문글 본문 디스플레이 카드 */}
@@ -124,7 +103,6 @@ export default function QuestionDetailPage() {
               <span className="text-slate-800 font-bold bg-slate-100 px-2 py-0.5 rounded-sm">
                 {question.writerName}
               </span>
-              <span>{question.writerEmail}</span>
             </div>
             <span>작성일시: {new Date(question.createdAt).toLocaleString()}</span>
           </div>
@@ -133,7 +111,7 @@ export default function QuestionDetailPage() {
         {/* 답변(댓글) 타임라인 보드 섹션 */}
         <section className="space-y-4">
           <h2 className="text-base font-bold text-slate-800">
-            전문가 답변 스택 ({answers.length})
+            답변 ({answers.length})
           </h2>
 
           {answers.length === 0 ? (
@@ -152,7 +130,6 @@ export default function QuestionDetailPage() {
                       <span className="text-blue-600 font-extrabold bg-blue-50 px-1.5 py-0.5 rounded-sm">
                         {ans.writerName}
                       </span>
-                      <span>({ans.writerEmail})</span>
                     </div>
                     <span>{new Date(ans.createdAt).toLocaleString()}</span>
                   </div>
@@ -167,7 +144,7 @@ export default function QuestionDetailPage() {
           <form onSubmit={handleAnswerSubmit} className="space-y-4">
             <h3 className="text-sm font-bold text-slate-800">나의 답변 남기기 </h3>
             <div>
-              <textarea
+              <textarea aria-label="내용"
                 placeholder="답변 내용을 책임감 있게 기입해 주세요. 깨끗한 커뮤니티 환경에 동참해 주셔서 감사합니다."
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
@@ -182,7 +159,7 @@ export default function QuestionDetailPage() {
                 disabled={submitting || !content.trim()}
                 className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-lg shadow-sm transition-all cursor-pointer disabled:opacity-50"
               >
-                {submitting ? "답변 인서트 중..." : "답변 등록하기"}
+                {submitting ? "답변 등록 중..." : "답변 등록하기"}
               </button>
             </div>
           </form>
