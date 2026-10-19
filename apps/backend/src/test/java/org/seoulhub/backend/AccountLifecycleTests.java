@@ -96,10 +96,10 @@ class AccountLifecycleTests extends AccountTestSupport {
         answers.save(Answer.builder().question(ownQuestion).user(other).content("내 질문의 답변").build());
         answers.save(Answer.builder().question(otherQuestion).user(owner).content("내가 쓴 답변").build());
         var kept=answers.save(Answer.builder().question(otherQuestion).user(other).content("유지 답변").build());
-        mvc.perform(post("/api/v1/users/delete-account").header("Authorization",first).contentType("application/json").content(body("password",password,"confirmation","no"))).andExpect(status().isBadRequest());
-        mvc.perform(post("/api/v1/users/delete-account").header("Authorization",first).contentType("application/json").content(body("password","wrong-password","confirmation","회원 탈퇴"))).andExpect(status().isBadRequest());
+        mvc.perform(post("/api/v1/users/delete-account").header("Authorization",second).contentType("application/json").content(body("password",password,"confirmation","no"))).andExpect(status().isBadRequest());
+        mvc.perform(post("/api/v1/users/delete-account").header("Authorization",second).contentType("application/json").content(body("password","wrong-password","confirmation","회원 탈퇴"))).andExpect(status().isBadRequest());
         assertThat(users.existsById(owner.getId())).isTrue();
-        mvc.perform(post("/api/v1/users/delete-account").header("Authorization",first).contentType("application/json").content(body("password",password,"confirmation","회원 탈퇴"))).andExpect(status().isOk());
+        mvc.perform(post("/api/v1/users/delete-account").header("Authorization",second).contentType("application/json").content(body("password",password,"confirmation","회원 탈퇴"))).andExpect(status().isOk());
         assertThat(users.existsById(owner.getId())).isFalse();assertThat(questions.existsById(ownQuestion.getId())).isFalse();
         assertThat(questions.existsById(otherQuestion.getId())).isTrue();assertThat(answers.existsById(kept.getId())).isTrue();
         assertThat(answers.findByQuestionIdOrderByIdAsc(otherQuestion.getId())).hasSize(1);

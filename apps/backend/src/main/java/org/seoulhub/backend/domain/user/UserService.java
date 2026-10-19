@@ -13,6 +13,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final LoginSessionRepository sessions;
     private final JwtTokenProvider jwtTokenProvider;
     private final org.seoulhub.backend.global.config.RequestRateLimiter rateLimiter;
     private static final String DUMMY_HASH = new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder().encode("unused-dummy-password");
@@ -38,6 +39,9 @@ public class UserService {
         boolean valid = passwordEncoder.matches(requestDto.getPassword(), user == null ? DUMMY_HASH : user.getPassword());
         if (user == null || !valid) throw new org.springframework.security.authentication.BadCredentialsException("이메일 또는 비밀번호가 올바르지 않습니다.");
         if (!user.isEmailVerified()) throw new org.springframework.security.authentication.DisabledException("이메일 인증을 먼저 완료해 주세요.");
+        // The user row lock serializes successful concurrent logins.
+        sessions.deleteByEmail(user.getEmail());
+        sessions.flush();
         return jwtTokenProvider.createToken(user.getEmail(), user.getRole().name());
     }
 }

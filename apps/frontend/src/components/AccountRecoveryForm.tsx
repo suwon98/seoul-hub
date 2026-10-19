@@ -50,7 +50,7 @@ export default function AccountRecoveryForm({ mode }: { mode: "verify" | "forgot
         {notice && <p role="status" className="rounded-lg bg-blue-50 p-3 text-sm text-blue-800">{notice}</p>}
         <button disabled={busy} className="w-full rounded-lg bg-slate-900 py-3 font-bold text-white disabled:opacity-50">{busy ? "처리 중…" : isLink ? mode === "verify" ? "인증하고 가입 완료" : "비밀번호 변경" : "메일 요청하기"}</button>
       </form>
-      <div className="flex flex-wrap gap-3 text-sm text-blue-700"><Link href="/login">로그인</Link><Link href="/">회원가입</Link>{isLink && <Link href={mode === "verify" ? "/verify-email" : "/forgot-password"}>새 링크 요청</Link>}</div>
+      <div className="flex flex-wrap gap-3 text-sm text-blue-700"><Link href="/login">로그인</Link><Link href="/signup">회원가입</Link>{isLink && <Link href={mode === "verify" ? "/verify-email" : "/forgot-password"}>새 링크 요청</Link>}</div>
     </>}
   </section></main>;
 }

@@ -1,2 +1,2 @@
-import AuthForm from "@/components/AuthForm";
-export default function SignupPage() { return <AuthForm signup />; }
+import { redirect } from "next/navigation";
+export default function HomePage() { redirect("/dashboard"); }
