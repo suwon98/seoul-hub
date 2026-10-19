@@ -45,7 +45,7 @@ seoul_api_budget의 한국 날짜별 카운터와 다음 허용 시각은 DB에 
 이 앱 밖에서 동일 키를 사용한 호출과 카운터 도입 전 호출은 포함하지 않는다.
 인구 API는 한 장소씩 호출한다: https://data.seoul.go.kr/dataList/OA-21778/A/1/datasetView.do
 원본 갱신 주기 5분: https://data.seoul.go.kr/dataVisual/seoul/guide.do
-Render 무료 휴면 시 수집은 중단되며 이력은 관심이 있었던 지역·시간에 한해서만 쌓인다. 전체 지역의 연속 시계열을 보장하지 않는다.
+Render 서버 휴면 시 수집은 중단되며 이력은 관심이 있었던 지역·시간에 한해서만 쌓인다. 전체 지역의 연속 시계열을 보장하지 않는다.
 
 ## 마이그레이션 및 복구
 

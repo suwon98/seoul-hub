@@ -15,7 +15,7 @@
 - 서울시 지역명 별칭을 변환하고 원본 관측 시각을 보존합니다. 같은 지역·시각은 중복 저장하지 않습니다.
 - 혼잡도는 관측 당시 등급을 유지하며, 관측 나이를 별도로 표시합니다. 45분 이상은 지연, 2시간 이상은 오래된 관측으로 구분합니다.
 - 최신 관측은 별도 테이블에 유지하고, 원시 관측은 48시간, 시간별 집계는 30일 보관합니다. 지연 수신을 반영하도록 최근 24개 완료 시간을 5분마다 다시 집계합니다. 차트에는 최근 24개 시간별 집계를 표시하며 집계 전에는 최근 원시 관측을 사용합니다.
-- 이메일 인증 후 닉네임·비밀번호 설정, 비밀번호 재설정, 현재 비밀번호 확인 후 회원 탈퇴, 회원 전용 Q&A. HttpOnly 쿠키와 DB 로그인 세션을 사용하고 로그아웃 시 재사용을 차단합니다.
+- 이메일 인증 후 닉네임·비밀번호 설정, 비밀번호 재설정, 현재 비밀번호 확인 후 회원 탈퇴, 회원 전용 Q&A. HttpOnly 쿠키와 DB 로그인 세션을 사용하고 로그아웃 시 재사용을 차단합니다. 같은 계정으로 새로 로그인하면 기존 세션은 만료됩니다. 첫 화면은 공개 대시보드이며 상단에서 로그인·회원가입으로 이동합니다.
 
 ## 로컬 실행
 
@@ -35,7 +35,7 @@ pnpm dev
 `apps/frontend/.env.example`을 참고해 `.env.local`을 설정합니다. 카카오 JavaScript 키는 브라우저 공개용이며 카카오 콘솔의 허용 웹 도메인 제한이 필요합니다. 서버용 비밀값에 `NEXT_PUBLIC_` 접두사를 붙이지 마세요.
 
 - 대시보드: http://localhost:3000/dashboard
-- 회원가입: http://localhost:3000 / 로그인: http://localhost:3000/login
+- 회원가입: http://localhost:3000/signup / 로그인: http://localhost:3000/login
 - 로컬 API 명세: http://localhost:8080/swagger-ui/index.html
 
 ## 검증
@@ -75,12 +75,12 @@ node scripts/smoke-auth.mjs
 
 ## 배포와 보안
 
-무료 포트폴리오 후보는 **Vercel Hobby + Render Free + Aiven Free MySQL**입니다. 현재 배포 파일과 운영 설정을 준비했으며 실제 서비스 개설/배포는 아직 하지 않았습니다. 무료 서버의 휴면 때문에 24시간 연속 수집은 보장되지 않습니다.
+**Vercel + Render + Aiven MySQL**로 운영 중입니다. [서비스 바로가기](https://seoul-hub.vercel.app/). 서버 휴면 중에는 수집이 중단되므로 관측 시각과 지연 상태를 함께 표시합니다.
 
-- **[직접 진행하는 순서별 안내](docs/manual-launch-guide.md)** — API 키 교체, 메일·DB·호스팅 계정, 로컬/운영 검증
-- [배포 옵션 비교](docs/deployment.md)
+- **[배포 및 운영 안내](docs/manual-launch-guide.md)** — 완료 상태, 후속 작업 경로, 변경 반영과 복구 절차
+- [배포 구성 참고](docs/deployment.md)
 - [보안 변경·검증 결과·남은 항목](docs/security-review.md)
 
-운영은 `prod` 프로필, 외부 MySQL, 검증된 TLS 연결, 무작위 JWT/프록시 비밀값을 요구합니다. Flyway로 스키마를 생성하고 Hibernate는 검증만 합니다. 과거 Git 이력에 들어간 서울시 키는 공개 배포 전에 재발급해야 합니다.
+운영은 `prod` 프로필, 외부 MySQL, 검증된 TLS 연결, 무작위 JWT/프록시 비밀값을 요구합니다. Flyway로 스키마를 생성하고 Hibernate는 검증만 합니다. 키 교체·기존 키 폐기와 Git 이력 정리를 완료했습니다. 실제 비밀값은 저장소에 넣지 않습니다.
 
 전체 거점 출처·저장 구조·수집 설정: [인구 데이터 가이드](docs/population-data.md).
