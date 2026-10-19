@@ -239,7 +239,7 @@ export default function DashboardPage() {
         src={`https://dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.NEXT_PUBLIC_KAKAO_MAP_CLIENT_KEY}&autoload=false`}
         strategy="afterInteractive"
         onError={() => setMapFailed(true)}
-        onLoad={() => {
+        onReady={() => {
           if (window.kakao && window.kakao.maps) {
             window.kakao.maps.load(() => setKakaoLoaded(true));
           }
