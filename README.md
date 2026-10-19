@@ -134,6 +134,8 @@ flowchart LR
 | 같은 계정의 복수 로그인 세션 유지 | 사용자 행 잠금 안에서 기존 세션 삭제 후 새 세션 생성 | [동시 로그인 회귀 테스트](apps/backend/src/test/java/org/seoulhub/backend/SingleSessionTests.java), 운영 두 창 교차 로그인 확인 |
 | MySQL과 JDBC 드라이버의 메타데이터 대소문자 차이 | 식별자 대소문자 보존을 위한 dialect 보완 | [Dialect 구현](apps/backend/src/main/java/org/seoulhub/backend/global/config/MySqlMariaDbDriverDialect.java), [MySQL 마이그레이션 테스트](apps/backend/src/test/java/org/seoulhub/backend/MigrationTests.java) |
 
+각 사례의 재현 조건·원인·해결·검증과 Windows Docker 엔진 문제는 **[트러블슈팅 상세 기록](docs/troubleshooting/20261019-deployment-and-session.md)**에서 확인할 수 있습니다.
+
 정량 성능 개선율은 별도로 측정하지 않았습니다. 설계 설명과 자동 테스트, 사용자 운영 확인을 구분해 기록합니다.
 
 ## 로컬 실행
